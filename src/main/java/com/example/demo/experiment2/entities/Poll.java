@@ -20,7 +20,6 @@ public class Poll {
         this.voteOptions = new ArrayList<>();
     }
 
-
     public int getId() {
         return id;
     }
@@ -64,8 +63,9 @@ public class Poll {
     public List<VoteOption> getVoteOptions() {
         return voteOptions;
     }
-    public boolean setVoteOptions(List<VoteOption> options) {
+
+    public void setVoteOptions(List<VoteOption> options) {
         voteOptions.clear();
-        return voteOptions.addAll(options);
+        voteOptions.addAll(options);
     }
 }
