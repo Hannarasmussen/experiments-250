@@ -2,6 +2,7 @@ package com.example.demo.experiment2.controllers;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class VoteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Vote> getVote(@PathVariable int id) {
+    public ResponseEntity<Vote> getVote(@PathVariable Long id) {
         Vote vote = pollManager.getVote(id);
         if (vote == null) {
             return ResponseEntity.notFound().build();
@@ -45,26 +46,26 @@ public class VoteController {
 
     @PostMapping
     public ResponseEntity<Vote> createVote(@RequestBody Vote vote) {
-        int id = UUID.randomUUID().hashCode();
-        while (!pollManager.addVote(id, vote))
-            id = UUID.randomUUID().hashCode();
+        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+        while (!pollManager.addVote(vote))
+            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
 
-        vote.setId(id); // <-- store the id in the Vote
+        vote.setId(id); 
         return ResponseEntity.status(HttpStatus.CREATED).body(vote);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vote> updateVote(@PathVariable int id, @RequestBody Vote vote) {
+    public ResponseEntity<Vote> updateVote(@PathVariable Long id, @RequestBody Vote vote) {
         Vote existingVote = pollManager.getVote(id);
         if (existingVote == null) {
             return ResponseEntity.notFound().build();
         }
-        pollManager.updateVote(id, vote);
-        return ResponseEntity.ok(vote);
+        pollManager.updateVote(existingVote);
+        return ResponseEntity.ok(existingVote);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Vote> deleteVote(@PathVariable int id) {
+    public ResponseEntity<Vote> deleteVote(@PathVariable Long id) {
         Vote existingVote = pollManager.getVote(id);
         if (existingVote == null) {
             return ResponseEntity.notFound().build();

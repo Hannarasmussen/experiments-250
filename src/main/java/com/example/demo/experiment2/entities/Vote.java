@@ -1,48 +1,74 @@
 package com.example.demo.experiment2.entities;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "votes")
 public class Vote {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private Instant publishedAt;
-    private User user;
-    private List<VoteOption> options;
+
+    @ManyToOne
+    private User voter;
+
+    @ManyToMany
+    private Set<VoteOption> votesOn;
+
     private boolean isValid;
 
     public Vote() {
         this.publishedAt = Instant.now();
-        options = new ArrayList<>();
+        votesOn = new LinkedHashSet<>();
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(int id) {
+
+    public void setId(Long id) {
         this.id = id;
     }
 
     public Instant getPublishedAt() {
         return publishedAt;
     }
+
     public void setPublishedAt(Instant publishedAt) {
         this.publishedAt = publishedAt;
     }
 
     public User getUser() {
-        return user;
-    }
-    public void setUser(User user) {
-        this.user = user;
+        return voter;
     }
 
-    public List<VoteOption> getOptions() {
-        return options;
+    public void setUser(User voter) {
+        this.voter = voter;
     }
-    public void setOptions(List<VoteOption> options) {
-        this.options = options;
+
+    public Set<VoteOption> getVoteOptions() {
+        return votesOn;
+    }
+
+    public void setVoteOptions(Set<VoteOption> votesOn) {
+        this.votesOn = votesOn;
+    }
+
+    public void setVoteOption(VoteOption option) {
+        this.votesOn = new LinkedHashSet<>();
+        this.votesOn.add(option);
     }
 
     public Boolean getIsValid() {
@@ -52,7 +78,5 @@ public class Vote {
     public void setIsValid(boolean isValid) {
         this.isValid = isValid;
     }
-
-    
 
 }

@@ -2,9 +2,8 @@ package com.example.demo.experiment2.controllers;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +32,7 @@ public class PollController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Poll> getPoll(@PathVariable int id) {
+    public ResponseEntity<Poll> getPoll(@PathVariable Long id) {
         Poll poll = pollManager.getPoll(id);
         if (poll == null) {
             return ResponseEntity.notFound().build();
@@ -47,27 +46,27 @@ public class PollController {
     @PostMapping
     public ResponseEntity<Poll> createPoll(@RequestBody Poll poll) {
         System.out.println("Received Poll: " + poll.getVoteOptions().get(0).getCaption());
-        int id = UUID.randomUUID().hashCode();
+        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
         poll.setId(id);
-        while (!pollManager.addPoll(id, poll)) {
-            id = UUID.randomUUID().hashCode();
+        while (!pollManager.addPoll(poll)) {
+            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
             poll.setId(id);
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(poll);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Poll> updatePoll(@PathVariable int id, @RequestBody Poll poll) {
+    public ResponseEntity<Poll> updatePoll(@PathVariable Long id, @RequestBody Poll poll) {
         Poll existingPoll = pollManager.getPoll(id);
         if (existingPoll == null) {
             return ResponseEntity.notFound().build();
         }
-        pollManager.updatePoll(id, poll);
+        pollManager.updatePoll(poll);
         return ResponseEntity.ok(poll);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Poll> deletePoll(@PathVariable int id) {
+    public ResponseEntity<Poll> deletePoll(@PathVariable Long id) {
         boolean removed = pollManager.removePoll(id);
         if (!removed) {
             return ResponseEntity.notFound().build();
@@ -76,7 +75,7 @@ public class PollController {
     }
 
     @GetMapping("/{id}/valid-until")
-    public ResponseEntity<Instant> getValidUntil(@PathVariable int id) {
+    public ResponseEntity<Instant> getValidUntil(@PathVariable Long id) {
         Instant validUntil = pollManager.getValidUntil(id);
         if (validUntil == null) {
             return ResponseEntity.notFound().build();
@@ -85,7 +84,7 @@ public class PollController {
     }
 
     @PostMapping("/{id}/valid-until")
-    public ResponseEntity<Boolean> setValidUntil(@PathVariable int id, @RequestBody Instant validUntil) {
+    public ResponseEntity<Boolean> setValidUntil(@PathVariable Long id, @RequestBody Instant validUntil) {
         boolean result = pollManager.setValidUntil(id, validUntil);
         return ResponseEntity.ok(result);
     }

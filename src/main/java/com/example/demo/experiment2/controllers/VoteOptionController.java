@@ -1,6 +1,7 @@
 package com.example.demo.experiment2.controllers;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class VoteOptionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VoteOption> getVoteOption(@PathVariable int id) {
+    public ResponseEntity<VoteOption> getVoteOption(@PathVariable Long id) {
         VoteOption voteOption = pollManager.getVoteOption(id);
         if (voteOption == null) {
             return ResponseEntity.notFound().build();
@@ -39,10 +40,10 @@ public class VoteOptionController {
 
     @PostMapping
     public ResponseEntity<VoteOption> createVoteOption(@RequestBody VoteOption voteOption) {
-        int id = UUID.randomUUID().hashCode();
+        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
         voteOption.setId(id);
-        while (!pollManager.addVoteOption(id, voteOption)) {
-            id = UUID.randomUUID().hashCode();
+        while (!pollManager.addVoteOption(voteOption)) {
+            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
             voteOption.setId(id);
         }
 
@@ -50,17 +51,17 @@ public class VoteOptionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VoteOption> updateVoteOption(@PathVariable int id, @RequestBody VoteOption voteOption) {
+    public ResponseEntity<VoteOption> updateVoteOption(@PathVariable Long id, @RequestBody VoteOption voteOption) {
         VoteOption existingVoteOption = pollManager.getVoteOption(id);
         if (existingVoteOption == null) {
             return ResponseEntity.notFound().build();
         }
-        pollManager.updateVoteOption(id, voteOption);
+        pollManager.updateVoteOption(voteOption);
         return ResponseEntity.ok(voteOption);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<VoteOption> deleteVoteOption(@PathVariable int id) {
+    public ResponseEntity<VoteOption> deleteVoteOption(@PathVariable Long id) {
         VoteOption existingVoteOption = pollManager.getVoteOption(id);
         if (existingVoteOption == null) {
             return ResponseEntity.notFound().build();

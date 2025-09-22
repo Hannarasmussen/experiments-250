@@ -2,6 +2,7 @@ package com.example.demo.experiment2.controllers;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable int id) {
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
         User user = pollManager.getUser(id);
         if (user == null) {
             return ResponseEntity.notFound().build();
@@ -40,29 +41,29 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        int id = UUID.randomUUID().hashCode();
-        user.setUserName(user.getUserName());
+        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+        user.setUsername(user.getUsername());
         user.setEmail(user.getEmail());
         user.setPassword(user.getPassword());
 
-        while (!pollManager.addUser(id, user))
-            id = UUID.randomUUID().hashCode();
+        while (!pollManager.addUser(user))
+            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
 
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         User existingUser = pollManager.getUser(id);
         if (existingUser == null) {
             return ResponseEntity.notFound().build();
         }
-        pollManager.updateUser(id, user);
+        pollManager.updateUser(user);
         return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         boolean removed = pollManager.removeUser(id);
         if (!removed) {
             return ResponseEntity.notFound().build();
