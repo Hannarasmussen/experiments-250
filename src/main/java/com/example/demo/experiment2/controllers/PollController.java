@@ -1,8 +1,10 @@
 package com.example.demo.experiment2.controllers;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,10 @@ import com.example.demo.experiment2.entities.Poll;
 import com.example.demo.experiment2.managers.PollManager;
 
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 
 @RestController
 @RequestMapping("/polls")
@@ -27,8 +33,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class PollController {
     private final PollManager pollManager;
 
-    public PollController(@Autowired PollManager pollManager) {
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+    @Autowired
+    private TopicExchange exchange;
+
+    private final Map<String, String> polls = new HashMap<>();
+
+    public PollController(@Autowired PollManager pollManager, @Autowired RabbitAdmin rabbitAdmin,
+            @Autowired TopicExchange exchange) {
         this.pollManager = pollManager;
+        this.rabbitAdmin = rabbitAdmin;
+        this.exchange = exchange;
     }
 
     @GetMapping("/{id}")
@@ -43,16 +59,41 @@ public class PollController {
         return ResponseEntity.ok(poll);
     }
 
+    // @PostMapping
+    // public ResponseEntity<Poll> createPoll(@RequestBody Poll poll) {
+
+    // System.out.println("Received Poll: " +
+    // poll.getVoteOptions().get(0).getCaption());
+
+    // Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+    // poll.setId(id);
+    // while (!pollManager.addPoll(poll)) {
+
+    // id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+    // poll.setId(id);
+    // }
+
+    // String routingKey = "poll." + poll.getId() + ".created";
+    // String message = "Poll created: " + poll.getQuestion();
+    // rabbitTemplate.convertAndSend(exchange.getName(), routingKey, message);
+    // System.out.println(" [x] Sent event: '" + message + "'");
+
+    // return ResponseEntity.status(HttpStatus.CREATED).body(poll);
+    // }
+
     @PostMapping
-    public ResponseEntity<Poll> createPoll(@RequestBody Poll poll) {
-        System.out.println("Received Poll: " + poll.getVoteOptions().get(0).getCaption());
-        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-        poll.setId(id);
-        while (!pollManager.addPoll(poll)) {
-            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-            poll.setId(id);
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(poll);
+    public String createPoll(@RequestBody String pollName) {
+        String queueName = "poll." + pollName + ".votes";
+
+        // Create and bind queue
+        Queue queue = new Queue(queueName, true);
+        rabbitAdmin.declareQueue(queue);
+        rabbitAdmin.declareBinding(BindingBuilder.bind(queue).to(exchange).with(queueName));
+
+        polls.put(pollName, queueName);
+        System.out.println("Created poll and queue: " + queueName);
+
+        return "Poll created: " + pollName;
     }
 
     @PutMapping("/{id}")
@@ -93,5 +134,10 @@ public class PollController {
     public ResponseEntity<List<Poll>> getAllPolls() {
         java.util.List<Poll> polls = pollManager.getAllPolls();
         return ResponseEntity.ok(polls);
+    }
+
+    @GetMapping
+    public Set<String> getPolls() {
+        return polls.keySet();
     }
 }

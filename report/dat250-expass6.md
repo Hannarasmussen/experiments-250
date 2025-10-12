@@ -1,6 +1,1 @@
-For this project I found it hard to connect the frontend to the backend. Before I have only worked with frontend and backend separatly and even though I thought I knew what needed to be done and how thay worked toghether, it was more difficult than i first assumed.
-
-I found it hard to understand how to show the public and private polls to the right people, and ended up only creating polls that can be voted on by logged in users. Logged in users are only allowed to vote once on each poll. 
-I had not made the backend ready for sending polls to others and therefore it was hard to work around it. 
-
-The problem I used the most time on was finding out why poll always only had default values. At first I tried to check the config, the headers and the structure of Poll, but neither of those were the issue because it User worked and theu were structured the same. Afterwards I checked that I had enabled CORS correctly and that my getters and setters were Jackson compatible. I used bruno and logging to try to figure out the issue. After a while I was able to find the problem, I had imported Swaggers Requestbody and not Springboots. 
+For this assignment I found it a bit confusing starting to use rabbitmq and trying to understand how it worked, but when i found out it was pretty simple to follow some toutorials to set up a connection. The hardest part was understanding how to integrate it with the application and testing it. 

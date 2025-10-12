@@ -34,8 +34,11 @@ dependencies {
 	implementation("org.hibernate.validator:hibernate-validator:8.0.1.Final")
     implementation("org.glassfish.expressly:expressly:5.0.0")
 
-	implementation("redis.clients:jedis:6.2.0")
-	
+	implementation("redis.clients:jedis:5.1.0")
+	implementation("com.rabbitmq:amqp-client:5.16.0")
+	implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+
 
 }
 

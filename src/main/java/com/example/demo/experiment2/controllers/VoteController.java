@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +27,16 @@ import com.example.demo.experiment2.managers.PollManager;
 @CrossOrigin(origins = "http://localhost:5173")
 public class VoteController {
     private PollManager pollManager;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private TopicExchange exchange;
 
-    public VoteController(@Autowired PollManager pollManager) {
+    public VoteController(@Autowired PollManager pollManager, @Autowired RabbitTemplate rabbitTemplate,
+            @Autowired TopicExchange exchange) {
         this.pollManager = pollManager;
+        this.rabbitTemplate = rabbitTemplate;
+        this.exchange = exchange;
     }
 
     @GetMapping("/{id}")
@@ -44,14 +53,27 @@ public class VoteController {
         return ResponseEntity.ok(pollManager.getAllVotes());
     }
 
-    @PostMapping
-    public ResponseEntity<Vote> createVote(@RequestBody Vote vote) {
-        Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-        while (!pollManager.addVote(vote))
-            id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+    // @PostMapping
+    // public ResponseEntity<Vote> createVote(@RequestBody Vote vote) {
+    // Long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+    // while (!pollManager.addVote(vote))
+    // id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
 
-        vote.setId(id); 
-        return ResponseEntity.status(HttpStatus.CREATED).body(vote);
+    // vote.setId(id);
+    // String routingKey = "poll." +
+    // vote.getVoteOptions().iterator().next().getPoll().getId() + ".vote";
+    // String message = "New vote for poll " + routingKey;
+    // rabbitTemplate.convertAndSend(exchange.getName(), routingKey, message);
+    // System.out.println(" [x] Sent vote event: '" + message + "'");
+    // return ResponseEntity.status(HttpStatus.CREATED).body(vote);
+    // }
+
+    @PostMapping("/{pollName}/vote")
+    public String vote(@PathVariable String pollName, @RequestBody String voteOption) {
+        String routingKey = "poll." + pollName + ".votes";
+        rabbitTemplate.convertAndSend(exchange.getName(), routingKey, voteOption);
+        System.out.println("Published vote for " + pollName + ": " + voteOption);
+        return "Vote sent for " + pollName;
     }
 
     @PutMapping("/{id}")
